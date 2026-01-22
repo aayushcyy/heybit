@@ -1,4 +1,5 @@
 type DateTitle = {
+  year: string;
   month: string;
   date: string;
   day: string;

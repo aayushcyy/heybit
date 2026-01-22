@@ -17,6 +17,7 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import Image from "next/image";
 import fireSvg from "@/public/fire-svg.svg";
+import ToastComp from "@/components/compo/ToastComp";
 
 const colors = [
   "#a855f7",
@@ -34,13 +35,14 @@ export default function Home() {
   const [taskname, setTaskname] = useState("");
   const [taskDesc, setTaskDesc] = useState("");
   const [taskColor, setTaskColor] = useState("");
+  const [showToast, setShowToast] = useState(false);
 
+  //updating tasks from local storage
   useEffect(() => {
     let taskStorage = localStorage.getItem("tasks") ?? "";
     if (!taskStorage) return;
     let parseTask: Task[] = JSON.parse(taskStorage);
     setTasks(parseTask);
-    console.log(todayDate);
   }, []);
 
   useEffect(() => {
@@ -51,27 +53,13 @@ export default function Home() {
     document.documentElement.classList.toggle("dark", dark);
   }, [dark]);
 
-  let handleClick = (itemIndex: number, index: number) => {
-    setTasks((prev) =>
-      prev.map((task, tIndex) => {
-        if (tIndex !== itemIndex) return task;
-
-        return {
-          ...task,
-          days: task.days.map((day, dIndex) =>
-            dIndex === index ? { ...day, complete: !day.complete } : day
-          ),
-        };
-      })
-    );
-  };
-
   let handleSubmit = (e: React.MouseEvent<HTMLButtonElement>) => {
     let taskDays: Day[] = [];
     for (let i = 0; i < 25; i++) {
       let eachDay = {
         id: `day-${i + 1}`,
         title: {
+          year: dayjs().add(i, "day").format("YY"),
           month: dayjs().add(i, "day").format("MMM"),
           date: dayjs().add(i, "day").format("D"),
           day: dayjs().add(i, "day").format("ddd"),
@@ -90,6 +78,31 @@ export default function Home() {
         days: [...taskDays],
       },
     ]);
+  };
+
+  let handleClick = (itemIndex: number, index: number) => {
+    setTasks((prev) =>
+      prev.map((task, tIndex) => {
+        if (tIndex !== itemIndex) return task;
+
+        return {
+          ...task,
+          days: task.days.map((day, dIndex) =>
+            dIndex === index ? { ...day, complete: !day.complete } : day
+          ),
+        };
+      })
+    );
+  };
+
+  let handleDelete = (id: string) => {
+    setTasks((prev) => prev.filter((item) => item.id !== id));
+    setShowToast(true);
+    let timer = setTimeout(() => {
+      setShowToast(false);
+    }, 2000);
+
+    return () => clearTimeout(timer);
   };
 
   return (
@@ -184,7 +197,7 @@ export default function Home() {
         )}
       </Dialog>
 
-      <div className="w-full h-full py-10 pt-24 flex flex-col gap-5">
+      <div className="w-full h-full py-10 pt-24 flex flex-col-reverse gap-5">
         {tasks.map((item, itemIndex) => (
           <div
             key={itemIndex}
@@ -213,7 +226,10 @@ export default function Home() {
                     0
                   </p>
                 </div>
-                <button className="cursor-pointer hover:text-orange-500">
+                <button
+                  className="cursor-pointer hover:text-orange-500"
+                  onClick={() => handleDelete(item.id)}
+                >
                   <Trash className="size-5" />
                 </button>
               </div>
@@ -252,6 +268,7 @@ export default function Home() {
             </div>
           </div>
         ))}
+        {showToast && <ToastComp />}
       </div>
     </div>
   );
