@@ -1,7 +1,15 @@
 "use client";
 import { Task, Day, DateTitle } from "@/types";
 import dayjs from "dayjs";
-import { Plus, Moon, Sun, Trash, Check } from "lucide-react";
+import {
+  Plus,
+  Moon,
+  Sun,
+  Check,
+  EllipsisVertical,
+  Pen,
+  Trash,
+} from "lucide-react";
 import React, { useState, useEffect } from "react";
 import {
   Dialog,
@@ -18,6 +26,7 @@ import { Input } from "@/components/ui/input";
 import Image from "next/image";
 import fireSvg from "@/public/fire-svg.svg";
 import ToastComp from "@/components/compo/ToastComp";
+import { useRouter } from "next/navigation";
 
 const colors = [
   "#a855f7",
@@ -34,8 +43,11 @@ export default function Home() {
   const [dark, setDark] = useState(true);
   const [taskname, setTaskname] = useState("");
   const [taskDesc, setTaskDesc] = useState("");
-  const [taskColor, setTaskColor] = useState("");
+  const [taskColor, setTaskColor] = useState("#a855f7");
   const [showToast, setShowToast] = useState(false);
+  const [loaded, setLoaded] = useState(false);
+
+  const router = useRouter();
 
   //updating tasks from local storage
   useEffect(() => {
@@ -43,11 +55,59 @@ export default function Home() {
     if (!taskStorage) return;
     let parseTask: Task[] = JSON.parse(taskStorage);
     setTasks(parseTask);
+    setLoaded(true);
   }, []);
 
+  //helper function for creating future days
+  function generateFutureDays(startIndex: number, count: number) {
+    return Array.from({ length: count }, (_, i) => {
+      const offset = startIndex + i;
+      const d = dayjs().add(offset, "day");
+      return {
+        id: `day-${offset + 1}`,
+        complete: false,
+        title: {
+          year: d.format("YYYY"),
+          month: d.format("MMM"),
+          date: d.format("D"),
+          day: d.format("ddd"),
+        },
+      };
+    });
+  }
+
+  //creating future days
   useEffect(() => {
+    if (!loaded || tasks.length === 0) return;
+    setTasks((prev) =>
+      prev.map((task) => {
+        const lastStored = task.days[task.days.length - 1];
+        const lastDate = dayjs(
+          `${lastStored.title.year}-${lastStored.title.month}-${lastStored.title.date}`,
+          "YYYY-MMM-D"
+        );
+
+        const targetLastDate = dayjs().add(24, "day");
+        // how many new days are missing
+        const daysToAdd = targetLastDate.diff(lastDate, "day");
+
+        if (daysToAdd <= 0) return task;
+
+        return {
+          ...task,
+          days: [
+            ...task.days,
+            ...generateFutureDays(task.days.length, daysToAdd),
+          ],
+        };
+      })
+    );
+  }, [loaded]);
+
+  useEffect(() => {
+    if (!loaded) return;
     localStorage.setItem("tasks", JSON.stringify(tasks));
-  }, [tasks]);
+  }, [tasks, loaded]);
 
   useEffect(() => {
     document.documentElement.classList.toggle("dark", dark);
@@ -59,7 +119,7 @@ export default function Home() {
       let eachDay = {
         id: `day-${i + 1}`,
         title: {
-          year: dayjs().add(i, "day").format("YY"),
+          year: dayjs().add(i, "day").format("YYYY"),
           month: dayjs().add(i, "day").format("MMM"),
           date: dayjs().add(i, "day").format("D"),
           day: dayjs().add(i, "day").format("ddd"),
@@ -106,9 +166,9 @@ export default function Home() {
   };
 
   return (
-    <div className="flex flex-col min-h-screen items-center justify-center bg-white dark:bg-[#0F0F0F] text-black px-10">
+    <div className="flex flex-col min-h-screen items-center justify-start bg-white dark:bg-[#0F0F0F] text-black px-20">
       <Dialog>
-        <div className="w-full flex justify-between mb-5 fixed top-0 px-10 h-16 items-center bg-white dark:bg-[#0F0F0F] opacity-100 z-10">
+        <div className="w-full flex justify-between mb-5 fixed top-0 px-20 h-16 items-center bg-white dark:bg-[#0F0F0F] opacity-100 z-10">
           <p className="text-xl font-medium dark:text-white">Heybit</p>
           <div className="flex gap-5 items-center">
             <div
@@ -201,10 +261,11 @@ export default function Home() {
         {tasks.map((item, itemIndex) => (
           <div
             key={itemIndex}
-            className={`bg-white dark:bg-[#1E1E1E] dark:text-[#F8FAFC] inset-shadow-2xs shadow-lg rounded-2xl px-6 py-5 space-y-4 border-l-6`}
+            className={`bg-white dark:bg-[#1E1E1E] dark:text-[#F8FAFC] inset-shadow-2xs shadow-lg rounded-2xl px-6 py-5 space-y-4 border-l-6 cursor-pointer`}
             style={{ borderLeftColor: item.color }}
+            onClick={() => router.push(`/${item.id}`)}
           >
-            <div className="flex justify-between items-center pr-10">
+            <div className="flex justify-between items-center pr-0">
               <div>
                 <p className="text-lg font-medium w-100 truncate">
                   {item.title}
@@ -213,21 +274,29 @@ export default function Home() {
                   {item.description}
                 </p>
               </div>
-              <div className="flex items-center gap-5">
-                <div className="relative pl-2 flex items-center justify-center h-7 w-7">
+              <div
+                className="flex items-center gap-5 cursor-default relative"
+                onClick={(e) => {
+                  e.stopPropagation();
+                }}
+              >
+                <div
+                  className="flex items-center pr-3 py-1 px-2 gap-1 rounded-xl"
+                  style={{ backgroundColor: `${item.color}33` }}
+                >
                   <Image
                     src={fireSvg}
                     alt="streak-icon"
                     width={100}
                     height={100}
-                    className="h-full w-full absolute"
+                    className="h-5 w-5"
                   />
-                  <p className="absolute text-xs font-semibold text-white -ml-2 mt-2">
-                    0
+                  <p className="font-semibold dark:text-white text-black">
+                    101
                   </p>
                 </div>
                 <button
-                  className="cursor-pointer hover:text-orange-500"
+                  className="bg-red-500/5 hover:bg-red-500/10 text-red-500 py-2 px-2 rounded-lg cursor-pointer flex items-center justify-center transition-all duration-100 ease-in-out"
                   onClick={() => handleDelete(item.id)}
                 >
                   <Trash className="size-5" />
