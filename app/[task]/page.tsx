@@ -9,12 +9,12 @@ import { useParams } from "next/navigation";
 import { Task } from "@/types";
 import Loader from "@/components/compo/Loader";
 import dayjs from "dayjs";
+import { ConfettiButton } from "@/components/ui/confetti";
 
 export default function page() {
   const [allTasks, setAllTasks] = useState<Task[]>([]);
   const [todayDate, setTodayDate] = useState(dayjs().format("ddd, MMMM D"));
   const [loading, setLoading] = useState(true);
-  const [markedToday, setMarkedToday] = useState(false);
   let myPra = useParams().task as string;
   const task = allTasks.find((t) => t.id === myPra) || null;
 
@@ -40,7 +40,6 @@ export default function page() {
   }, []);
 
   let handleClick = (parentId: string) => {
-    setMarkedToday(!markedToday);
     setAllTasks((prev) =>
       prev.map((task) => {
         if (task.id !== parentId) return task;
@@ -76,149 +75,132 @@ export default function page() {
           <EllipsisVertical size="18" />
         </div>
       </div>
-      {allTasks.map((item) =>
-        item.id === myPra ? (
-          <section className="px-20 w-full py-5 space-y-5" key={item.id}>
-            <div className="bg-[#1e1e1e] px-5 py-6 rounded-xl space-y-4">
-              <p className="text-sm opacity-70">{item.description}</p>
-              <div className="grid grid-cols-3 grid-rows-1 gap-4">
-                <div className="bg-[#282a2d] rounded-lg flex flex-col gap-1 items-center py-2">
-                  <div
-                    className="flex items-center pr-3 py-1 px-2 gap-2 rounded-xl"
-                    //style={{ backgroundColor: `${task.color}33` }}
-                  >
-                    <Image
-                      src={fireSvg}
-                      alt="streak-icon"
-                      width={100}
-                      height={100}
-                      className="h-6 w-6"
-                    />
-                    <p className="font-semibold text-2xl">{5}</p>
-                  </div>
-                  <p className="text-xs opacity-70">Current Streak</p>
-                </div>
-                <div className="bg-[#282a2d] rounded-lg flex flex-col gap-1 items-center py-2">
-                  <div
-                    className="flex items-center pr-3 py-1 px-2 gap-2 rounded-xl"
-                    //style={{ backgroundColor: `${task.color}33` }}
-                  >
-                    <Image
-                      src={trophySvg}
-                      alt="streak-icon"
-                      width={100}
-                      height={100}
-                      className="h-6.5 w-6.5 pt-1"
-                    />
-                    <p className="font-semibold text-2xl">{5}</p>
-                  </div>
-                  <p className="text-xs opacity-70">Best Streak</p>
-                </div>
-                <div className="bg-[#282a2d] rounded-lg flex flex-col gap-1 items-center py-2">
-                  <div
-                    className="flex items-center pr-3 py-1 px-2 gap-2 rounded-xl"
-                    //style={{ backgroundColor: `${task.color}33` }}
-                  >
-                    <Image
-                      src={calendarSvg}
-                      alt="streak-icon"
-                      width={100}
-                      height={100}
-                      className="h-6.5 w-6.5 pt-1"
-                    />
-                    <p className="font-semibold text-2xl">{15}</p>
-                  </div>
-                  <p className="text-xs opacity-70">Best Streak</p>
-                </div>
+
+      <section className="px-20 w-full py-5 space-y-5">
+        <div className="bg-[#1e1e1e] px-5 py-6 rounded-xl space-y-4">
+          <p className="text-sm opacity-70">{task?.description}</p>
+          <div className="grid grid-cols-3 grid-rows-1 gap-4">
+            <div className="bg-[#282a2d] rounded-lg flex flex-col gap-1 items-center py-2">
+              <div
+                className="flex items-center pr-3 py-1 px-2 gap-2 rounded-xl"
+                //style={{ backgroundColor: `${task.color}33` }}
+              >
+                <Image
+                  src={fireSvg}
+                  alt="streak-icon"
+                  width={100}
+                  height={100}
+                  className="h-6 w-6"
+                />
+                <p className="font-semibold text-2xl">{5}</p>
               </div>
+              <p className="text-xs opacity-70">Current Streak</p>
             </div>
-            <div className="bg-[#1e1e1e] px-5 py-6 rounded-xl flex flex-col">
-              <div className="flex flex-col items-center gap-3">
-                <p className="text-sm opacity-70">{todayDate}</p>
-                <div
-                  className={`border-3 border-white h-24 w-24 cursor-pointer hover:bg-[#2d2d2d] rounded-full flex items-center justify-center`}
-                  style={
-                    todayDay?.complete
-                      ? {
-                          backgroundColor: item.color,
-                          borderColor: item.color,
-                        }
-                      : {}
-                  }
-                  onClick={() => handleClick(myPra)}
-                >
-                  <Check className="size-12" />
-                </div>
-                <p
-                  className="font-medium"
-                  style={todayDay?.complete ? { color: task?.color } : {}}
-                >
-                  {todayDay?.complete
-                    ? "Completed Today!"
-                    : "Mark today as done"}
-                </p>
+            <div className="bg-[#282a2d] rounded-lg flex flex-col gap-1 items-center py-2">
+              <div
+                className="flex items-center pr-3 py-1 px-2 gap-2 rounded-xl"
+                //style={{ backgroundColor: `${task.color}33` }}
+              >
+                <Image
+                  src={trophySvg}
+                  alt="streak-icon"
+                  width={100}
+                  height={100}
+                  className="h-6.5 w-6.5 pt-1"
+                />
+                <p className="font-semibold text-2xl">{5}</p>
               </div>
+              <p className="text-xs opacity-70">Best Streak</p>
             </div>
-            <div className="bg-[#1e1e1e] px-5 py-6 rounded-xl space-y-4">
-              <p>Timeline</p>
-              <div className="flex gap-1 overflow-x-auto no-scrollbar">
-                {allTasks.map((item, i) =>
-                  item.id === myPra
-                    ? item.days.map((eachDay) => (
-                        <div
-                          key={eachDay.id}
-                          className={`hover:bg-[#45494e9a] dark:bg-[#282A2D] cursor-pointer transition-all ease-in-out duration-200 rounded-xl py-2 px-2 space-y-1 text-center dark:hover:bg-[#45494e] ${
-                            dayjs().format("MMM D") ===
-                            eachDay.title.month.concat(" ", eachDay.title.date)
-                              ? ""
-                              : "dark:border-[#282A2D]"
-                          }`}
-                          style={{
-                            borderWidth:
-                              dayjs().format("MMM D") ===
-                              eachDay.title.month.concat(
-                                " ",
-                                eachDay.title.date
-                              )
-                                ? 2
-                                : undefined,
-                            borderColor:
-                              dayjs().format("MMM D") ===
-                              eachDay.title.month.concat(
-                                " ",
-                                eachDay.title.date
-                              )
-                                ? item.color
-                                : undefined,
-                          }}
-                          onClick={() => handleClick(myPra)}
-                        >
-                          <p className="text-xs font-medium">
-                            {eachDay.title.day}
-                          </p>
-                          <p
-                            className={`h-10 w-10 rounded-full flex items-center justify-center text-sm font-semibold text-blue-950 ${
-                              eachDay.complete ? "" : "bg-gray-200"
-                            }`}
-                            style={{
-                              backgroundColor: eachDay.complete
-                                ? item.color
-                                : undefined,
-                            }}
-                          >
-                            {eachDay.complete ? <Check /> : eachDay.title.date}
-                          </p>
-                        </div>
-                      ))
-                    : ""
-                )}
+            <div className="bg-[#282a2d] rounded-lg flex flex-col gap-1 items-center py-2">
+              <div
+                className="flex items-center pr-3 py-1 px-2 gap-2 rounded-xl"
+                //style={{ backgroundColor: `${task.color}33` }}
+              >
+                <Image
+                  src={calendarSvg}
+                  alt="streak-icon"
+                  width={100}
+                  height={100}
+                  className="h-6.5 w-6.5 pt-1"
+                />
+                <p className="font-semibold text-2xl">{15}</p>
               </div>
+              <p className="text-xs opacity-70">Best Streak</p>
             </div>
-          </section>
-        ) : (
-          ""
-        )
-      )}
+          </div>
+        </div>
+        <div className="bg-[#1e1e1e] px-5 py-6 rounded-xl flex flex-col">
+          <div className="flex flex-col items-center gap-3">
+            <p className="text-sm opacity-70">{todayDate}</p>
+            <ConfettiButton
+              className="border-3 border-white h-24 w-24 rounded-full flex items-center justify-center"
+              style={
+                todayDay?.complete
+                  ? { backgroundColor: task?.color, borderColor: task?.color }
+                  : {}
+              }
+              onClickCapture={() => handleClick(myPra)}
+            >
+              <Check className="size-12" />
+            </ConfettiButton>
+
+            <p
+              className="font-medium"
+              style={todayDay?.complete ? { color: task?.color } : {}}
+            >
+              {todayDay?.complete ? "Completed Today!" : "Mark today as done"}
+            </p>
+          </div>
+        </div>
+        <div className="bg-[#1e1e1e] px-5 py-6 rounded-xl space-y-4">
+          <p>Timeline</p>
+          <div className="flex gap-1 overflow-x-auto no-scrollbar">
+            {allTasks.map((item, i) =>
+              item.id === myPra
+                ? item.days.map((eachDay) => (
+                    <div
+                      key={eachDay.id}
+                      className={`hover:bg-[#45494e9a] dark:bg-[#282A2D] cursor-pointer transition-all ease-in-out duration-200 rounded-xl py-2 px-2 space-y-1 text-center dark:hover:bg-[#45494e] ${
+                        dayjs().format("MMM D") ===
+                        eachDay.title.month.concat(" ", eachDay.title.date)
+                          ? ""
+                          : "dark:border-[#282A2D]"
+                      }`}
+                      style={{
+                        borderWidth:
+                          dayjs().format("MMM D") ===
+                          eachDay.title.month.concat(" ", eachDay.title.date)
+                            ? 2
+                            : undefined,
+                        borderColor:
+                          dayjs().format("MMM D") ===
+                          eachDay.title.month.concat(" ", eachDay.title.date)
+                            ? item.color
+                            : undefined,
+                      }}
+                      onClick={() => handleClick(myPra)}
+                    >
+                      <p className="text-xs font-medium">{eachDay.title.day}</p>
+                      <p
+                        className={`h-10 w-10 rounded-full flex items-center justify-center text-sm font-semibold text-blue-950 ${
+                          eachDay.complete ? "" : "bg-gray-200"
+                        }`}
+                        style={{
+                          backgroundColor: eachDay.complete
+                            ? item.color
+                            : undefined,
+                        }}
+                      >
+                        {eachDay.complete ? <Check /> : eachDay.title.date}
+                      </p>
+                    </div>
+                  ))
+                : ""
+            )}
+          </div>
+        </div>
+      </section>
     </div>
   );
 }
