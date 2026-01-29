@@ -4,18 +4,32 @@ import Image from "next/image";
 import fireSvg from "@/public/fire-svg.svg";
 import trophySvg from "@/public/trophy-svg.svg";
 import calendarSvg from "@/public/calendar-svg.svg";
-import { ArrowLeft, EllipsisVertical, Check } from "lucide-react";
+import {
+  ArrowLeft,
+  EllipsisVertical,
+  Check,
+  Trash2,
+  PenLine,
+} from "lucide-react";
 import { useParams } from "next/navigation";
 import { Task } from "@/types";
 import Loader from "@/components/compo/Loader";
 import dayjs from "dayjs";
+import isoWeek from "dayjs/plugin/isoWeek";
+import isBetween from "dayjs/plugin/isBetween";
 import { ConfettiButton } from "@/components/ui/confetti";
+import { Button } from "@/components/ui/button";
+import { Progress } from "@/components/ui/progress";
+import Link from "next/link";
 
 export default function page() {
   const [allTasks, setAllTasks] = useState<Task[]>([]);
   const [todayDate, setTodayDate] = useState(dayjs().format("ddd, MMMM D"));
+  const [timeline, setTimeline] = useState<number | undefined>();
   const [loading, setLoading] = useState(true);
   let myPra = useParams().task as string;
+  dayjs.extend(isoWeek);
+  dayjs.extend(isBetween);
   const task = allTasks.find((t) => t.id === myPra) || null;
 
   //finding todayDay
@@ -64,15 +78,37 @@ export default function page() {
     localStorage.setItem("tasks", JSON.stringify(allTasks));
   }, [allTasks]);
 
+  //calculating this week's timeline
+  useEffect(() => {
+    let weekStart = dayjs().startOf("isoWeek");
+    let weekEnd = dayjs().endOf("isoWeek");
+
+    const timeline = task?.days.filter((item) => {
+      const itemDate = dayjs(
+        `${item.title.year}-${item.title.month}-${item.title.date}`,
+        "YYYY-MMM-D"
+      );
+
+      return (
+        item.complete && itemDate.isBetween(weekStart, weekEnd, "day", "[]")
+      );
+    });
+
+    setTimeline(timeline?.length);
+  }, [allTasks]);
+
   if (loading) return <Loader />;
 
   return (
     <div className="flex flex-col min-h-screen items-center justify-start bg-[#0F0F0F] text-white">
       <div className="w-full flex justify-between items-center py-4 border-b border-[#1E1E1E] px-20">
         <div className="text-xl font-medium flex items-center gap-2">
-          <div className="rounded-sm p-2 cursor-pointer hover:bg-[#1E1E1E]">
+          <Link
+            href="/"
+            className="rounded-sm p-2 cursor-pointer hover:bg-[#1E1E1E]"
+          >
             <ArrowLeft className="size-4" />
-          </div>
+          </Link>
           {task?.title}
         </div>
         <div className="rounded-sm p-2 cursor-pointer hover:bg-[#1E1E1E]">
@@ -81,6 +117,7 @@ export default function page() {
       </div>
 
       <section className="px-20 w-full py-5 space-y-5">
+        {/* habit summary */}
         <div className="bg-[#1e1e1e] px-5 py-6 rounded-xl space-y-4">
           <p className="text-sm opacity-70">{task?.description}</p>
           <div className="grid grid-cols-3 grid-rows-1 gap-4">
@@ -134,6 +171,7 @@ export default function page() {
             </div>
           </div>
         </div>
+        {/* complete mark toggle */}
         <div className="bg-[#1e1e1e] px-5 py-6 rounded-xl flex flex-col">
           <div className="flex flex-col items-center gap-3">
             <p className="text-sm opacity-70">{todayDate}</p>
@@ -163,6 +201,7 @@ export default function page() {
             </p>
           </div>
         </div>
+        {/* timeline */}
         <div className="bg-[#1e1e1e] px-5 py-6 rounded-xl space-y-4">
           <p>Timeline</p>
           <div className="flex gap-1 overflow-x-auto no-scrollbar">
@@ -209,6 +248,29 @@ export default function page() {
                 : ""
             )}
           </div>
+        </div>
+        {/* this week performance */}
+        <div className="bg-[#1e1e1e] px-5 py-6 rounded-xl space-y-2">
+          <p>This Week</p>
+          <p className="text-sm opacity-70">{timeline} / 7 days completed</p>
+          <div>
+            <Progress value={timeline} color={task?.color} />
+          </div>
+        </div>
+        {/* action buttons */}
+        <div className="rounded-xl space-x-4 flex gap-2">
+          <Button
+            className="flex-1 cursor-pointer bg-[#1e1e1e] border border-neutral-700"
+            variant="default"
+          >
+            <PenLine /> Edit Habit
+          </Button>
+          <Button
+            className="flex-1 bg-[#631a1c3a] text-red-500 hover:bg-[#932426d0] hover:text-white cursor-pointer border border-[#9324267b]"
+            variant="destructive"
+          >
+            <Trash2 /> Edit Habit
+          </Button>
         </div>
       </section>
     </div>
