@@ -26,6 +26,7 @@ export default function page() {
       (d) =>
         d.title.year.concat(" ", d.title.month, " ", d.title.date) === todayKey
     );
+  const isCompleted = todayDay?.complete ?? false;
 
   //updating tasks from local storage
   useEffect(() => {
@@ -39,7 +40,10 @@ export default function page() {
     setLoading(false);
   }, []);
 
-  let handleClick = (parentId: string) => {
+  let handleClick = (
+    parentId: string,
+    childId: string | undefined = todayDay?.id
+  ) => {
     setAllTasks((prev) =>
       prev.map((task) => {
         if (task.id !== parentId) return task;
@@ -47,7 +51,7 @@ export default function page() {
         return {
           ...task,
           days: task.days.map((day) =>
-            day.id === todayDay?.id ? { ...day, complete: !day.complete } : day
+            day.id === childId ? { ...day, complete: !day.complete } : day
           ),
         };
       })
@@ -140,7 +144,13 @@ export default function page() {
                   ? { backgroundColor: task?.color, borderColor: task?.color }
                   : {}
               }
-              onClickCapture={() => handleClick(myPra)}
+              onClickCapture={(e) => {
+                if (isCompleted) {
+                  e.stopPropagation();
+                }
+
+                handleClick(myPra);
+              }}
             >
               <Check className="size-12" />
             </ConfettiButton>
@@ -179,7 +189,7 @@ export default function page() {
                             ? item.color
                             : undefined,
                       }}
-                      onClick={() => handleClick(myPra)}
+                      onClick={() => handleClick(myPra, eachDay.id)}
                     >
                       <p className="text-xs font-medium">{eachDay.title.day}</p>
                       <p
