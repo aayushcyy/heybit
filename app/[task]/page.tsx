@@ -1,5 +1,17 @@
 "use client";
 import React, { useState, useEffect } from "react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogFooter,
+  DialogClose,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@radix-ui/react-label";
 import Image from "next/image";
 import fireSvg from "@/public/fire-svg.svg";
 import trophySvg from "@/public/trophy-svg.svg";
@@ -10,6 +22,7 @@ import {
   Check,
   Trash2,
   PenLine,
+  Plus,
 } from "lucide-react";
 import { useParams } from "next/navigation";
 import { Task } from "@/types";
@@ -22,11 +35,25 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import Link from "next/link";
 
+const colors = [
+  "#a855f7",
+  "#ec4899",
+  "#f97316",
+  "#22c55e",
+  "#3b82f6",
+  "#14b8a6",
+];
+
 export default function page() {
   const [allTasks, setAllTasks] = useState<Task[]>([]);
   const [todayDate, setTodayDate] = useState(dayjs().format("ddd, MMMM D"));
-  const [timeline, setTimeline] = useState<number | undefined>();
+  const [timeline, setTimeline] = useState<number>();
+  const [progressTvalue, setProgressTvalue] = useState(7);
   const [loading, setLoading] = useState(true);
+  const [progressWeekly, setProgressWeekly] = useState(true);
+  const [taskname, setTaskname] = useState("");
+  const [description, setDescription] = useState("");
+  const [color, setColor] = useState("");
   let myPra = useParams().task as string;
   dayjs.extend(isoWeek);
   dayjs.extend(isBetween);
@@ -80,6 +107,8 @@ export default function page() {
 
   //calculating this week's timeline
   useEffect(() => {
+    let monthStart = dayjs().startOf("month");
+    let monthEnd = dayjs().endOf("month");
     let weekStart = dayjs().startOf("isoWeek");
     let weekEnd = dayjs().endOf("isoWeek");
 
@@ -89,13 +118,27 @@ export default function page() {
         "YYYY-MMM-D"
       );
 
-      return (
-        item.complete && itemDate.isBetween(weekStart, weekEnd, "day", "[]")
-      );
+      if (progressWeekly) {
+        setProgressTvalue(7);
+        return (
+          item.complete && itemDate.isBetween(weekStart, weekEnd, "day", "[]")
+        );
+      }
+
+      if (!progressWeekly) {
+        const daysInMonth = dayjs().daysInMonth();
+        console.log("total days this month: ", daysInMonth);
+        setProgressTvalue(daysInMonth);
+        return (
+          item.complete && itemDate.isBetween(monthStart, monthEnd, "day", "[]")
+        );
+      }
     });
 
     setTimeline(timeline?.length);
-  }, [allTasks]);
+    console.log(timeline);
+    console.log(progressWeekly);
+  }, [allTasks, progressWeekly]);
 
   if (loading) return <Loader />;
 
@@ -249,29 +292,128 @@ export default function page() {
             )}
           </div>
         </div>
-        {/* this week performance */}
+        {/* progress performance */}
         <div className="bg-[#1e1e1e] px-5 py-6 rounded-xl space-y-2">
-          <p>This Week</p>
-          <p className="text-sm opacity-70">{timeline} / 7 days completed</p>
+          <div className="flex items-center justify-between">
+            <p>Progress</p>
+            <div className="relative p-1 rounded-full bg-[#282A2D] flex items-center text-xs font-medium w-fit">
+              {/* Sliding background */}
+              <div
+                className="absolute top-1 bottom-1 h-[calc(100%-0.5rem)] w-[calc(50%-0.25rem)] rounded-full transition-transform duration-300 ease-in-out"
+                style={{
+                  backgroundColor: task?.color,
+                  transform: progressWeekly
+                    ? "translateX(0%)"
+                    : "translateX(100%)",
+                }}
+              />
+
+              {/* Weekly */}
+              <p
+                className="relative z-10 py-1.5 px-3.5 cursor-pointer rounded-full transition-colors duration-200"
+                onClick={() => setProgressWeekly(true)}
+              >
+                Weekly
+              </p>
+
+              {/* Monthly */}
+              <p
+                className="relative z-10 py-1.5 px-3.5 cursor-pointer rounded-full transition-colors duration-200"
+                onClick={() => setProgressWeekly(false)}
+              >
+                Monthly
+              </p>
+            </div>
+          </div>
+          <p className="text-sm opacity-70">
+            {timeline} / {progressTvalue} days completed
+          </p>
           <div>
-            <Progress value={timeline} color={task?.color} />
+            <Progress
+              value={timeline}
+              totalValue={progressTvalue}
+              color={task?.color}
+            />
           </div>
         </div>
         {/* action buttons */}
-        <div className="rounded-xl space-x-4 flex gap-2">
-          <Button
-            className="flex-1 cursor-pointer bg-[#1e1e1e] border border-neutral-700"
-            variant="default"
-          >
-            <PenLine /> Edit Habit
-          </Button>
-          <Button
-            className="flex-1 bg-[#631a1c3a] text-red-500 hover:bg-[#932426d0] hover:text-white cursor-pointer border border-[#9324267b]"
-            variant="destructive"
-          >
-            <Trash2 /> Edit Habit
-          </Button>
-        </div>
+        {/* <Dialog>
+          <div className="flex gap-5 items-center">
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Add a new task</DialogTitle>
+              </DialogHeader>
+              <div className="grid gap-4">
+                <div className="grid gap-3">
+                  <Label htmlFor="name-1">Task Name</Label>
+                  <Input
+                    id="name-1"
+                    name="name"
+                    placeholder={task?.title}
+                    value={taskname}
+                    onChange={(e) => setTaskname(e.target.value)}
+                  />
+                </div>
+                <div className="grid gap-3">
+                  <Label htmlFor="description">Description</Label>
+                  <Input
+                    id="description"
+                    name="username"
+                    placeholder={task?.description}
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
+                  />
+                </div>
+                <div className="space-y-3">
+                  <Label htmlFor="colors">Color</Label>
+                  <div className="flex gap-5">
+                    {colors.map((c) => (
+                      <button
+                        key={c}
+                        onClick={() => setColor(c)}
+                        className={`h-10 w-10 cursor-pointer rounded-full border-2 transition
+                    ${
+                      color === c
+                        ? "border-white ring-2 ring-black"
+                        : "border-transparent"
+                    }
+                    `}
+                        style={{ backgroundColor: c }}
+                      />
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              <DialogFooter>
+                <DialogClose
+                  type="submit"
+                  className="capitalize px-5 cursor-pointer py-2 text-sm bg-white text-black rounded-lg font-medium"
+                  onClick={(e) => handleSubmit(e)}
+                >
+                  Add
+                </DialogClose>
+              </DialogFooter>
+            </DialogContent>
+          </div>
+
+          <div className="rounded-xl space-x-4 flex gap-2">
+            <DialogTrigger className="flex-1 border border-neutral-700 rounded-lg overflow-hidden">
+              <Button
+                variant="default"
+                className="w-full cursor-pointer bg-[#1e1e1e]"
+              >
+                <PenLine /> Edit Habit
+              </Button>
+            </DialogTrigger>
+            <Button
+              className="flex-1 bg-[#631a1c3a] text-red-500 hover:bg-[#932426d0] hover:text-white cursor-pointer border border-[#9324267b]"
+              variant="destructive"
+            >
+              <Trash2 /> Edit Habit
+            </Button>
+          </div>
+        </Dialog> */}
       </section>
     </div>
   );
