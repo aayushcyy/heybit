@@ -143,12 +143,17 @@ export default function Home() {
   let handleClick = (itemIndex: number, index: number) => {
     setTasks((prev) =>
       prev.map((task, tIndex) => {
+        const todayIs = dayjs().format("YYYY MMM D");
         if (tIndex !== itemIndex) return task;
 
         return {
           ...task,
           days: task.days.map((day, dIndex) =>
-            dIndex === index ? { ...day, complete: !day.complete } : day
+            dIndex === index &&
+            day.title.year.concat(" ", day.title.month, " ", day.title.date) ===
+              todayIs
+              ? { ...day, complete: !day.complete }
+              : day
           ),
         };
       })

@@ -88,12 +88,22 @@ export default function page() {
     setAllTasks((prev) =>
       prev.map((task) => {
         if (task.id !== parentId) return task;
+        let todayIs = dayjs().format("YYYY MMM D");
 
         return {
           ...task,
-          days: task.days.map((day) =>
-            day.id === childId ? { ...day, complete: !day.complete } : day
-          ),
+          days: task.days.map((day) => {
+            //marking only the today's task
+            return day.id === childId &&
+              day.title.year.concat(
+                " ",
+                day.title.month,
+                " ",
+                day.title.date
+              ) === todayIs
+              ? { ...day, complete: !day.complete }
+              : day;
+          }),
         };
       })
     );
@@ -330,7 +340,7 @@ export default function page() {
           </p>
           <div>
             <Progress
-              value={timeline}
+              value={timeline ?? 1}
               totalValue={progressTvalue}
               color={task?.color}
             />
